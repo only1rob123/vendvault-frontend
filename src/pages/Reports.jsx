@@ -177,11 +177,11 @@ export default function Reports() {
                           <div className="text-xs text-gray-400">{p.category}</div>
                         </td>
                         <td className="text-right py-2 font-medium">{p.units_sold}</td>
-                        <td className="text-right py-2">${p.revenue?.toFixed(2)}</td>
-                        <td className="text-right py-2 text-green-600">${p.gross_profit?.toFixed(2)}</td>
+                        <td className="text-right py-2">${Number(p.revenue).toFixed(2)}</td>
+                        <td className="text-right py-2 text-green-600">${Number(p.gross_profit).toFixed(2)}</td>
                         <td className="text-right py-2 text-brand-600 font-medium">{p.daily_velocity}/day</td>
                         <td className="text-right py-2 text-green-600">
-                          {p.sell_price > 0 ? ((p.sell_price - p.purchase_price) / p.sell_price * 100).toFixed(1) : '—'}%
+                          {Number(p.sell_price) > 0 ? ((Number(p.sell_price) - Number(p.purchase_price)) / Number(p.sell_price) * 100).toFixed(1) : '—'}%
                         </td>
                       </tr>
                     ))}
@@ -219,7 +219,7 @@ export default function Reports() {
                         {s.product_name ? <span className="text-gray-900">{s.product_name}</span> : <span className="text-gray-400 italic">Unassigned</span>}
                       </td>
                       <td className="py-2 text-right font-medium">{s.units_sold}</td>
-                      <td className="py-2 text-right">${s.revenue?.toFixed(2) || '0.00'}</td>
+                      <td className="py-2 text-right">${s.revenue != null ? Number(s.revenue).toFixed(2) : '0.00'}</td>
                       <td className="py-2 text-right text-brand-600">{s.daily_velocity}/day</td>
                       <td className="py-2 text-right">
                         <span className={s.current_quantity === 0 ? 'text-red-600 font-medium' : s.current_quantity <= s.capacity * 0.25 ? 'text-amber-600' : 'text-green-600'}>

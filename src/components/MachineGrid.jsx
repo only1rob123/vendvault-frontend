@@ -164,7 +164,7 @@ export default function MachineGrid({ machine, slots, products, onRefresh }) {
               <div className="font-mono text-sm font-medium text-gray-700 w-16">{slot.slot_code}</div>
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-900">{slot.product_name || <span className="text-gray-400 italic">Unassigned</span>}</div>
-                {slot.sell_price && <div className="text-xs text-gray-400">${slot.sell_price?.toFixed(2)} sell · ${slot.purchase_price?.toFixed(2)} cost</div>}
+                {slot.sell_price && <div className="text-xs text-gray-400">${Number(slot.sell_price).toFixed(2)} sell · ${Number(slot.purchase_price).toFixed(2)} cost</div>}
               </div>
               <div className="flex items-center gap-2">
                 <div className={`text-sm font-medium ${slot.current_quantity === 0 ? 'text-red-600' : slot.current_quantity <= slot.capacity * 0.25 ? 'text-amber-600' : 'text-green-700'}`}>

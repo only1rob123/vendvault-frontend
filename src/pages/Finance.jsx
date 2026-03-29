@@ -114,8 +114,8 @@ export default function Finance() {
   }
   useEffect(() => { load() }, [year, month])
 
-  const totalRevenue = pl.reduce((s, r) => s + r.gross_revenue, 0)
-  const totalProfit = pl.reduce((s, r) => s + r.net_profit, 0)
+  const totalRevenue = pl.reduce((s, r) => s + Number(r.gross_revenue), 0)
+  const totalProfit = pl.reduce((s, r) => s + Number(r.net_profit), 0)
   const totalMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0
 
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -203,17 +203,17 @@ export default function Finance() {
                           <div className="font-medium text-gray-900">{row.machine_name}</div>
                           <div className="text-xs text-gray-400">{row.location_name}</div>
                         </td>
-                        <td className="px-4 py-3 text-right">${row.gross_revenue?.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-500">-${row.commission_amount?.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right">${row.net_revenue?.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-500">-${row.cogs?.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right font-medium">${row.gross_profit?.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-500">-${row.fixed_costs?.toFixed(2)}</td>
-                        <td className={`px-4 py-3 text-right font-bold ${row.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ${row.net_profit?.toFixed(2)}
+                        <td className="px-4 py-3 text-right">${Number(row.gross_revenue).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-gray-500">-${Number(row.commission_amount).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right">${Number(row.net_revenue).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-gray-500">-${Number(row.cogs).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">${Number(row.gross_profit).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-gray-500">-${Number(row.fixed_costs).toFixed(2)}</td>
+                        <td className={`px-4 py-3 text-right font-bold ${Number(row.net_profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${Number(row.net_profit).toFixed(2)}
                         </td>
-                        <td className={`px-4 py-3 text-right font-medium ${row.margin_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {row.margin_pct?.toFixed(1)}%
+                        <td className={`px-4 py-3 text-right font-medium ${Number(row.margin_pct) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {Number(row.margin_pct).toFixed(1)}%
                         </td>
                       </tr>
                     ))}

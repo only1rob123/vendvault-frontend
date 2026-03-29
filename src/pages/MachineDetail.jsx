@@ -101,7 +101,7 @@ export default function MachineDetail() {
                   ['Type', machine.machine_type],
                   ['Grid', `${machine.layout_rows} × ${machine.layout_cols}`],
                   ['Commission', `${machine.commission_pct}%`],
-                  ['Monthly Cost', `$${machine.monthly_fixed_cost?.toFixed(2)}`],
+                  ['Monthly Cost', `$${Number(machine.monthly_fixed_cost || 0).toFixed(2)}`],
                   ['Status', machine.status],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between">

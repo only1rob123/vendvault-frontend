@@ -26,8 +26,8 @@ export default function Dashboard() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const monthTrend = kpis?.last_month_revenue > 0
-    ? ((kpis.month_revenue - kpis.last_month_revenue) / kpis.last_month_revenue) * 100
+  const monthTrend = Number(kpis?.last_month_revenue) > 0
+    ? ((Number(kpis.month_revenue) - Number(kpis.last_month_revenue)) / Number(kpis.last_month_revenue)) * 100
     : null
 
   if (loading) return <div className="p-8 text-gray-400">Loading...</div>
@@ -41,9 +41,9 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
-        <StatCard title="Today's Revenue" value={`$${kpis?.today_revenue?.toFixed(2) || '0.00'}`}
+        <StatCard title="Today's Revenue" value={`$${kpis?.today_revenue != null ? Number(kpis.today_revenue).toFixed(2) : '0.00'}`}
           sub={`${kpis?.today_transactions || 0} sales`} icon={DollarSign} color="brand" />
-        <StatCard title="Month Revenue" value={`$${kpis?.month_revenue?.toFixed(2) || '0.00'}`}
+        <StatCard title="Month Revenue" value={`$${kpis?.month_revenue != null ? Number(kpis.month_revenue).toFixed(2) : '0.00'}`}
           sub={`${kpis?.month_transactions || 0} sales`} icon={TrendingUp} color="green"
           trend={monthTrend} />
         <StatCard title="Active Machines" value={kpis?.active_machines || 0}
@@ -123,8 +123,8 @@ export default function Dashboard() {
                       <div className="text-xs text-gray-400">{p.category}</div>
                     </td>
                     <td className="text-right py-2 font-medium">{p.units_sold}</td>
-                    <td className="text-right py-2">${p.revenue?.toFixed(2)}</td>
-                    <td className="text-right py-2 text-green-600">${p.gross_profit?.toFixed(2)}</td>
+                    <td className="text-right py-2">${Number(p.revenue).toFixed(2)}</td>
+                    <td className="text-right py-2 text-green-600">${Number(p.gross_profit).toFixed(2)}</td>
                     <td className="text-right py-2 text-brand-600">{p.daily_velocity}/day</td>
                   </tr>
                 ))}

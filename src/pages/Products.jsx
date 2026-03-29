@@ -155,7 +155,7 @@ export default function Products() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(p => {
-                const margin = p.sell_price > 0 ? ((p.sell_price - p.purchase_price) / p.sell_price * 100).toFixed(1) : '—'
+                const margin = Number(p.sell_price) > 0 ? ((Number(p.sell_price) - Number(p.purchase_price)) / Number(p.sell_price) * 100).toFixed(1) : '—'
                 return (
                   <tr key={p.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -163,8 +163,8 @@ export default function Products() {
                       <div className="text-xs text-gray-400">{p.sku || ''} {p.unit_size ? `· ${p.unit_size}` : ''}</div>
                     </td>
                     <td className="px-4 py-3"><span className={`badge ${CAT_COLORS[p.category] || CAT_COLORS.other}`}>{p.category}</span></td>
-                    <td className="px-4 py-3 text-right">${p.purchase_price?.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-right font-medium">${p.sell_price?.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right">${Number(p.purchase_price).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-medium">${Number(p.sell_price).toFixed(2)}</td>
                     <td className="px-4 py-3 text-right text-green-600 font-medium">{margin}%</td>
                     <td className="px-4 py-3 text-right">
                       <span className={p.warehouse_qty <= 12 ? 'text-amber-600 font-medium' : 'text-gray-700'}>{p.warehouse_qty}</span>

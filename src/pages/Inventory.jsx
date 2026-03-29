@@ -196,7 +196,7 @@ export default function Inventory() {
                           <span className="text-gray-300 text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600">${(item.quantity * item.purchase_price).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right text-gray-600">${(item.quantity * Number(item.purchase_price)).toFixed(2)}</td>
                       <td className="px-4 py-3 text-right">
                         <button className="btn-secondary py-1 px-2 text-xs"
                           onClick={() => setEditQty(q => ({ ...q, [item.product_id]: item.quantity }))}>Edit</button>
