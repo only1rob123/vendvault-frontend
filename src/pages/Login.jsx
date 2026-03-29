@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@brennanco.com')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,7 +32,7 @@ export default function Login() {
             <span className="text-white font-bold text-2xl">VV</span>
           </div>
           <h1 className="text-2xl font-bold text-white">VendVault</h1>
-          <p className="text-gray-400 text-sm mt-1">Vending management by Brennan &amp; Co</p>
+          <p className="text-gray-400 text-sm mt-1">Vending management software</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
@@ -50,6 +50,11 @@ export default function Login() {
           <button type="submit" className="btn-primary w-full justify-center py-2.5" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
+
+          <p className="text-center text-xs text-gray-400">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-brand-600 hover:underline font-medium">Get started free</Link>
+          </p>
         </form>
       </div>
     </div>
