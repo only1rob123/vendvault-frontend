@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Upload, CheckCircle, XCircle, Clock, FileText, Mail, RefreshCw, Play, Settings } from 'lucide-react'
+import { Upload, CheckCircle, XCircle, Clock, FileText, Mail, RefreshCw, Play, Copy, Check } from 'lucide-react'
 import api from '../lib/api'
 
 function DropZone({ onFile, accept, label, description }) {
@@ -30,127 +30,91 @@ function DropZone({ onFile, accept, label, description }) {
   )
 }
 
-function EmailPollerCard({ onImported }) {
-  const [status, setStatus] = useState(null)
-  const [triggering, setTriggering] = useState(false)
-  const [triggerResult, setTriggerResult] = useState(null)
-
-  const loadStatus = () =>
-    api.get('/email-poller/status').then(r => setStatus(r.data)).catch(() => setStatus(null))
-
-  useEffect(() => { loadStatus() }, [])
-
-  const trigger = async () => {
-    setTriggering(true)
-    setTriggerResult(null)
-    try {
-      const { data } = await api.post('/email-poller/trigger')
-      setStatus(data.status)
-      setTriggerResult(data.result)
-      if (data.result?.imported > 0) onImported()
-    } catch (e) {
-      setTriggerResult({ error: e.response?.data?.error || 'Trigger failed' })
-    } finally { setTriggering(false) }
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
+  return (
+    <button
+      onClick={copy}
+      className="flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+    >
+      {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+      {copied ? 'Copied!' : 'Copy'}
+    </button>
+  )
+}
 
-  if (!status) return null
+function InboundEmailCard() {
+  const [company, setCompany] = useState(null)
 
-  const { configured, enabled, running, lastRun, lastError, lastResult, totalImported, email, intervalMins } = status
+  useEffect(() => {
+    api.get('/auth/company').then(r => setCompany(r.data)).catch(() => {})
+  }, [])
+
+  const importEmail = company?.inbound_email_token
+    ? `${company.inbound_email_token}@import.vendvault.net`
+    : null
 
   return (
     <div className="card overflow-hidden mb-6">
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Mail size={15} className={configured ? 'text-brand-600' : 'text-gray-400'} />
-          <h2 className="font-semibold text-sm text-gray-900">Email Auto-Import</h2>
-          {configured && enabled && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Active</span>
-          )}
-          {configured && !enabled && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Standby</span>
-          )}
-          {!configured && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Not Configured</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {configured && (
-            <button
-              className="btn-primary text-xs py-1 px-3 flex items-center gap-1"
-              onClick={trigger}
-              disabled={triggering || running}
-            >
-              {triggering || running
-                ? <><RefreshCw size={12} className="animate-spin" /> Checking...</>
-                : <><Play size={12} /> Check Now</>}
-            </button>
-          )}
-        </div>
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+        <Mail size={15} className="text-brand-600" />
+        <h2 className="font-semibold text-sm text-gray-900">Automatic Email Import</h2>
+        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Active</span>
       </div>
 
       <div className="p-4">
-        {!configured ? (
-          <div className="flex items-start gap-3">
-            <Settings size={16} className="text-gray-400 mt-0.5 shrink-0" />
-            <div className="text-sm text-gray-600">
-              <p className="font-medium text-gray-800 mb-1">Set up automatic email import</p>
-              <p className="text-xs text-gray-500 mb-3">
-                Add these variables to your backend <code className="bg-gray-100 px-1 rounded">.env</code> file to automatically import Cantaloupe CSV reports from your email inbox:
+        <p className="text-sm text-gray-600 mb-4">
+          Configure Cantaloupe Seed to email your daily CSV reports to your unique import address below.
+          VendVault will automatically process any <span className="font-medium">Transaction Line Item</span> or <span className="font-medium">Activity Analysis</span> CSV attachments.
+        </p>
+
+        {importEmail ? (
+          <div className="space-y-4">
+            {/* The import email address */}
+            <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
+              <div className="text-xs font-medium text-brand-700 mb-1.5 uppercase tracking-wide">Your Import Email Address</div>
+              <div className="flex items-center gap-3">
+                <code className="flex-1 text-sm font-mono text-brand-900 bg-white border border-brand-200 rounded-lg px-3 py-2 overflow-x-auto">
+                  {importEmail}
+                </code>
+                <CopyButton text={importEmail} />
+              </div>
+              <p className="text-xs text-brand-600 mt-2">
+                This address is unique to your account. Keep it private — anyone with this address can import data into your account.
               </p>
-              <pre className="bg-gray-900 text-green-400 text-xs rounded-lg p-3 overflow-x-auto leading-relaxed">{`EMAIL_IMAP_HOST=imap.gmail.com
-EMAIL_IMAP_PORT=993
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_COMPANY_ID=your-company-uuid
-EMAIL_POLL_INTERVAL_MINS=15`}</pre>
-              <p className="text-xs text-gray-400 mt-2">
-                For Gmail, use an <strong>App Password</strong> (not your regular password). Enable 2FA in Google Account, then go to Security → App Passwords.
+            </div>
+
+            {/* Setup instructions */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Cantaloupe Seed Setup — One Time</p>
+              <ol className="text-sm text-gray-600 space-y-2 list-none">
+                {[
+                  ['Log into Seed', 'Go to Reports → Report Scheduler → New Scheduled Report'],
+                  ['Report type', 'Select "Transaction Line Item Export"'],
+                  ['Format', 'CSV'],
+                  ['Frequency', 'Daily at 3:00 AM'],
+                  ['Date range', 'Yesterday'],
+                  ['Delivery', 'Email — paste your import address above as the recipient'],
+                ].map(([label, detail], i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex-shrink-0 w-5 h-5 bg-brand-600 text-white rounded-full text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                    <span><span className="font-medium text-gray-800">{label}:</span> {detail}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-gray-400 mt-1">
+                After the first scheduled email arrives, data will appear in your dashboard automatically — no further action needed.
               </p>
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs text-gray-500 mb-0.5">Watching</div>
-                <div className="text-sm font-medium text-gray-900 truncate">{email}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs text-gray-500 mb-0.5">Poll Interval</div>
-                <div className="text-sm font-medium text-gray-900">Every {intervalMins} min</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs text-gray-500 mb-0.5">Total Imported</div>
-                <div className="text-sm font-medium text-brand-600">{totalImported} rows</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span>Last check: {lastRun ? new Date(lastRun).toLocaleString() : 'Not yet'}</span>
-              {lastResult && !lastError && (
-                <span className="text-green-600">
-                  Found {lastResult.found} email{lastResult.found !== 1 ? 's' : ''} · Imported {lastResult.imported} row{lastResult.imported !== 1 ? 's' : ''}
-                </span>
-              )}
-              {lastError && (
-                <span className="text-red-600">Error: {lastError}</span>
-              )}
-            </div>
-
-            {triggerResult && (
-              <div className={`text-xs rounded-lg px-3 py-2 ${
-                triggerResult.error
-                  ? 'bg-red-50 text-red-700 border border-red-200'
-                  : 'bg-green-50 text-green-700 border border-green-200'
-              }`}>
-                {triggerResult.error
-                  ? `Error: ${triggerResult.error}`
-                  : triggerResult.skipped
-                    ? 'Already running — try again in a moment'
-                    : `Checked inbox: found ${triggerResult.found} email${triggerResult.found !== 1 ? 's' : ''}, imported ${triggerResult.imported} row${triggerResult.imported !== 1 ? 's' : ''}`
-                }
-              </div>
-            )}
+          <div className="h-20 flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -197,7 +161,7 @@ export default function Import() {
       </div>
 
       {/* Email Auto-Import */}
-      <EmailPollerCard onImported={loadLog} />
+      <InboundEmailCard />
 
       {importing && (
         <div className="mb-4 p-4 bg-brand-50 border border-brand-200 rounded-xl text-sm text-brand-700 flex items-center gap-2">
