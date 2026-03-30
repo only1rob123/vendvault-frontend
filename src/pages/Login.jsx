@@ -19,7 +19,22 @@ export default function Login() {
       await login(email, password, remember)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed')
+      const status = err.response?.status
+      const serverMsg = err.response?.data?.error
+
+      if (!err.response) {
+        setError('Could not reach the server. Check your internet connection and try again.')
+      } else if (status === 401 || status === 400) {
+        setError('Incorrect email or password. Please try again.')
+      } else if (status === 404) {
+        setError('No account found with that email address.')
+      } else if (status === 429) {
+        setError('Too many login attempts. Please wait a moment and try again.')
+      } else if (status >= 500) {
+        setError('Something went wrong on our end. Please try again in a moment.')
+      } else {
+        setError(serverMsg || 'Login failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -59,7 +74,12 @@ export default function Login() {
               Remember me
             </label>
           </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+              <span className="text-red-500 mt-0.5 shrink-0">⚠</span>
+              <p className="text-red-700 text-sm leading-snug">{error}</p>
+            </div>
+          )}
           <button type="submit" className="btn-primary w-full justify-center py-2.5" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
