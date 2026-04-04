@@ -17,10 +17,15 @@ function stockColor(qty, capacity) {
   return 'border-green-300 bg-green-50'
 }
 
+const TYPE_FILTERS = ['all', 'drink', 'snack', 'candy', 'healthy', 'other']
+
 function SlotModal({ slot, products, onClose, onSave }) {
   const [selectedProduct, setSelectedProduct] = useState(slot.product_id || '')
   const [qty, setQty] = useState(slot.current_quantity ?? 0)
+  const [typeFilter, setTypeFilter] = useState('all')
   const [saving, setSaving] = useState(false)
+
+  const visibleProducts = typeFilter === 'all' ? products : products.filter(p => p.category === typeFilter)
 
   const handleSave = async () => {
     setSaving(true)
@@ -48,11 +53,20 @@ function SlotModal({ slot, products, onClose, onSave }) {
         </div>
         <div className="p-5 space-y-4">
           <div>
+            <label className="label">Product Type</label>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {TYPE_FILTERS.map(t => (
+                <button key={t} type="button" onClick={() => { setTypeFilter(t); setSelectedProduct('') }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize transition-colors ${typeFilter === t ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
             <label className="label">Product</label>
             <select className="input" value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}>
               <option value="">— Unassigned —</option>
-              {products.map(p => (
-                <option key={p.id} value={p.id}>{p.name} ({p.category})</option>
+              {visibleProducts.map(p => (
+                <option key={p.id} value={p.id}>{p.name}{typeFilter === 'all' ? ` (${p.category})` : ''}</option>
               ))}
             </select>
           </div>

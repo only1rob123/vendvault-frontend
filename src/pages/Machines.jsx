@@ -4,6 +4,30 @@ import { Plus, Monitor, AlertTriangle, X, ChevronRight } from 'lucide-react'
 import MachineQR from '../components/MachineQR'
 import api from '../lib/api'
 
+// ── Machine brand/model presets ───────────────────────────────────────────────
+const MACHINE_PRESETS = [
+  { brand: 'AMS',           model: 'Sensit 3',         type: 'snack',  rows: 5, cols: 10 },
+  { brand: 'AMS',           model: 'Sensit 2',         type: 'snack',  rows: 5, cols: 8  },
+  { brand: 'AMS',           model: 'Outsider (outdoor)', type: 'combo', rows: 5, cols: 8  },
+  { brand: 'Crane',         model: '167',              type: 'snack',  rows: 5, cols: 8  },
+  { brand: 'Crane',         model: 'BevMax 4',         type: 'drinks', rows: 6, cols: 5  },
+  { brand: 'Crane',         model: 'BevMax 5',         type: 'drinks', rows: 8, cols: 5  },
+  { brand: 'Crane',         model: 'Combo 550',        type: 'combo',  rows: 7, cols: 8  },
+  { brand: 'USI / Wittern', model: '3185',             type: 'snack',  rows: 5, cols: 9  },
+  { brand: 'USI / Wittern', model: '3575',             type: 'snack',  rows: 6, cols: 9  },
+  { brand: 'Royal Vendors', model: 'RVCC 660',         type: 'drinks', rows: 6, cols: 5  },
+  { brand: 'Royal Vendors', model: 'RVCC 804',         type: 'drinks', rows: 8, cols: 5  },
+  { brand: 'Dixie Narco',   model: '501E',             type: 'drinks', rows: 1, cols: 9  },
+  { brand: 'Dixie Narco',   model: '368',              type: 'drinks', rows: 1, cols: 7  },
+  { brand: 'Seaga',         model: 'INF5S',            type: 'snack',  rows: 5, cols: 9  },
+  { brand: 'Seaga',         model: 'HY900',            type: 'combo',  rows: 6, cols: 8  },
+  { brand: 'Avanti',        model: 'AVM430',           type: 'combo',  rows: 6, cols: 8  },
+  { brand: 'Vendo',         model: 'V-Max 720',        type: 'drinks', rows: 6, cols: 6  },
+  { brand: 'Vendo',         model: '721',              type: 'drinks', rows: 6, cols: 5  },
+]
+
+const PRESET_BRANDS = ['', ...Array.from(new Set(MACHINE_PRESETS.map(p => p.brand)))]
+
 function MachineModal({ machine, locations, onClose, onSave }) {
   const [form, setForm] = useState({
     name: '', machine_type: 'snack', location_id: locations[0]?.id || '',
@@ -11,8 +35,21 @@ function MachineModal({ machine, locations, onClose, onSave }) {
     layout_rows: 5, layout_cols: 6, commission_pct: 0, monthly_fixed_cost: 0,
     ...machine
   })
+  const [presetBrand, setPresetBrand] = useState('')
   const [saving, setSaving] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const brandModels = MACHINE_PRESETS.filter(p => p.brand === presetBrand)
+
+  const applyPreset = (preset) => {
+    setForm(f => ({
+      ...f,
+      machine_type: preset.type,
+      layout_rows: preset.rows,
+      layout_cols: preset.cols,
+      model: `${preset.brand} ${preset.model}`,
+    }))
+  }
 
   const handleSave = async () => {
     if (!form.name || !form.location_id) return alert('Name and location required')
@@ -33,6 +70,25 @@ function MachineModal({ machine, locations, onClose, onSave }) {
           <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
         </div>
         <div className="p-5 space-y-3">
+
+          {/* Brand preset picker (only on new machine) */}
+          {!machine?.id && (
+            <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <label className="label mb-0">Brand / Model Preset <span className="text-gray-400 font-normal">(optional — auto-fills layout)</span></label>
+              <div className="grid grid-cols-2 gap-2">
+                <select className="input py-1.5 text-sm" value={presetBrand} onChange={e => { setPresetBrand(e.target.value) }}>
+                  <option value="">Select brand...</option>
+                  {PRESET_BRANDS.filter(Boolean).map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <select className="input py-1.5 text-sm" value="" disabled={!brandModels.length}
+                  onChange={e => { const p = brandModels[Number(e.target.value)]; if (p) applyPreset(p) }}>
+                  <option value="">Select model...</option>
+                  {brandModels.map((p, i) => <option key={i} value={i}>{p.model} ({p.type}, {p.rows}×{p.cols})</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="label">Location *</label>
             <select className="input" value={form.location_id} onChange={e => set('location_id', e.target.value)}>
@@ -43,11 +99,17 @@ function MachineModal({ machine, locations, onClose, onSave }) {
             <label className="label">Machine Name *</label>
             <input className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Snack Machine" />
           </div>
-          <div>
-            <label className="label">Type</label>
-            <select className="input" value={form.machine_type} onChange={e => set('machine_type', e.target.value)}>
-              {['snack','drinks','combo'].map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Type</label>
+              <select className="input" value={form.machine_type} onChange={e => set('machine_type', e.target.value)}>
+                {['snack','drinks','combo'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Model</label>
+              <input className="input" value={form.model || ''} onChange={e => set('model', e.target.value)} placeholder="e.g. AMS Sensit 3" />
+            </div>
           </div>
           <div>
             <label className="label">Cantaloupe Device ID</label>
