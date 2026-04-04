@@ -245,13 +245,15 @@ function SalesLog({ days, machineFilter }) {
   const load = useCallback(async (off, append) => {
     if (off === 0) setLoading(true); else setLoadingMore(true)
     try {
-      const [dataRes, countRes] = await Promise.all([
-        api.get(`/sales?${qs}&limit=${PAGE_SIZE}&offset=${off}`),
-        off === 0 ? api.get(`/sales/count?${qs}`) : Promise.resolve(null),
-      ])
-      if (countRes) setTotal(countRes.data.total)
+      const dataRes = await api.get(`/sales?${qs}&limit=${PAGE_SIZE}&offset=${off}`)
       setRows(prev => append ? [...prev, ...dataRes.data] : dataRes.data)
       setOffset(off + dataRes.data.length)
+      // Fetch count separately — failure here won't block data display
+      if (off === 0) {
+        api.get(`/sales/count?${qs}`)
+          .then(r => setTotal(r.data.total))
+          .catch(() => {}) // count is optional; Load More hides if total stays 0
+      }
     } finally {
       setLoading(false); setLoadingMore(false)
     }
