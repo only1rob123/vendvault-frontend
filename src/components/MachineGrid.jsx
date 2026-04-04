@@ -23,15 +23,41 @@ function SlotModal({ slot, products, onClose, onSave }) {
   const [selectedProduct, setSelectedProduct] = useState(slot.product_id || '')
   const [qty, setQty] = useState(slot.current_quantity ?? 0)
   const [typeFilter, setTypeFilter] = useState('all')
+  const [sellPrice, setSellPrice] = useState(slot.slot_sell_price ?? slot.sell_price ?? '')
+  const [purchasePrice, setPurchasePrice] = useState(slot.slot_purchase_price ?? slot.purchase_price ?? '')
   const [saving, setSaving] = useState(false)
 
   const visibleProducts = typeFilter === 'all' ? products : products.filter(p => p.category === typeFilter)
 
+  // When product changes, pre-fill prices from product defaults
+  const handleProductChange = (pid) => {
+    setSelectedProduct(pid)
+    if (pid) {
+      const p = products.find(p => p.id === pid)
+      if (p) {
+        setSellPrice(p.sell_price ?? '')
+        setPurchasePrice(p.purchase_price ?? '')
+      }
+    } else {
+      setSellPrice('')
+      setPurchasePrice('')
+    }
+  }
+
+  const productChanged = selectedProduct !== (slot.product_id || '')
+  const priceChanged = selectedProduct &&
+    (String(sellPrice) !== String(slot.slot_sell_price ?? '') ||
+     String(purchasePrice) !== String(slot.slot_purchase_price ?? ''))
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      if (selectedProduct !== (slot.product_id || '')) {
-        await api.post(`/slots/${slot.id}/assign`, { product_id: selectedProduct || null })
+      if (productChanged || priceChanged) {
+        await api.post(`/slots/${slot.id}/assign`, {
+          product_id: selectedProduct || null,
+          sell_price: selectedProduct && sellPrice !== '' ? Number(sellPrice) : null,
+          purchase_price: selectedProduct && purchasePrice !== '' ? Number(purchasePrice) : null,
+        })
       }
       if (qty !== slot.current_quantity) {
         await api.patch(`/slots/${slot.id}/stock`, { quantity: Number(qty) })
@@ -43,6 +69,13 @@ function SlotModal({ slot, products, onClose, onSave }) {
       setSaving(false)
     }
   }
+
+  const selectedProductObj = selectedProduct ? products.find(p => p.id === selectedProduct) : null
+  const productDefaultSell = selectedProductObj?.sell_price
+  const productDefaultBuy = selectedProductObj?.purchase_price
+  const margin = sellPrice && purchasePrice
+    ? (((Number(sellPrice) - Number(purchasePrice)) / Number(sellPrice)) * 100).toFixed(1)
+    : null
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -56,20 +89,49 @@ function SlotModal({ slot, products, onClose, onSave }) {
             <label className="label">Product Type</label>
             <div className="flex flex-wrap gap-1 mb-2">
               {TYPE_FILTERS.map(t => (
-                <button key={t} type="button" onClick={() => { setTypeFilter(t); setSelectedProduct('') }}
+                <button key={t} type="button" onClick={() => { setTypeFilter(t); handleProductChange('') }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize transition-colors ${typeFilter === t ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   {t}
                 </button>
               ))}
             </div>
             <label className="label">Product</label>
-            <select className="input" value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}>
+            <select className="input" value={selectedProduct} onChange={e => handleProductChange(e.target.value)}>
               <option value="">— Unassigned —</option>
               {visibleProducts.map(p => (
                 <option key={p.id} value={p.id}>{p.name}{typeFilter === 'all' ? ` (${p.category})` : ''}</option>
               ))}
             </select>
           </div>
+
+          {selectedProduct && (
+            <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-gray-700">Machine Pricing</p>
+                {margin && <p className="text-xs text-green-600 font-medium">{margin}% margin</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="label text-xs">Sell Price $</label>
+                  <input type="number" step="0.01" min="0" className="input text-sm"
+                    value={sellPrice} onChange={e => setSellPrice(e.target.value)} />
+                  {productDefaultSell && String(sellPrice) !== String(productDefaultSell) && (
+                    <p className="text-xs text-gray-400 mt-0.5">Default: ${Number(productDefaultSell).toFixed(2)}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="label text-xs">Cost Price $</label>
+                  <input type="number" step="0.01" min="0" className="input text-sm"
+                    value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} />
+                  {productDefaultBuy && String(purchasePrice) !== String(productDefaultBuy) && (
+                    <p className="text-xs text-gray-400 mt-0.5">Default: ${Number(productDefaultBuy).toFixed(2)}</p>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">Overrides the catalogue price for this slot only</p>
+            </div>
+          )}
+
           <div>
             <label className="label">Current Stock (units)</label>
             <input type="number" min="0" max={slot.capacity} className="input"
