@@ -45,18 +45,22 @@ function SlotModal({ slot, products, onClose, onSave }) {
   }
 
   const productChanged = selectedProduct !== (slot.product_id || '')
-  const priceChanged = selectedProduct &&
-    (String(sellPrice) !== String(slot.slot_sell_price ?? '') ||
-     String(purchasePrice) !== String(slot.slot_purchase_price ?? ''))
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      if (productChanged || priceChanged) {
+      if (productChanged) {
+        // Full reassignment — also passes the new prices
         await api.post(`/slots/${slot.id}/assign`, {
           product_id: selectedProduct || null,
           sell_price: selectedProduct && sellPrice !== '' ? Number(sellPrice) : null,
           purchase_price: selectedProduct && purchasePrice !== '' ? Number(purchasePrice) : null,
+        })
+      } else if (selectedProduct) {
+        // Same product — just update prices in-place
+        await api.patch(`/slots/${slot.id}/price`, {
+          sell_price: sellPrice !== '' ? Number(sellPrice) : null,
+          purchase_price: purchasePrice !== '' ? Number(purchasePrice) : null,
         })
       }
       if (qty !== slot.current_quantity) {
